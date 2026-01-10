@@ -192,8 +192,11 @@ async function generateSubtitle() {
 
     const lineHeight = baseFontSize * 1.2;
 
+    // Calculate separator space for ACZ style to be added to the canvas height
+    const aczSeparatorSpace = style === 'acz' ? (lineHeight / 4) + (lineHeight / 2) + 2 : 0;
+
     // Calculate Height
-    let canvasHeight = 50 + (speakerLines.length * lineHeight) + 2 + (quoteLines.length * lineHeight) + CONFIG.padding;
+    let canvasHeight = 50 + (speakerLines.length * lineHeight) + 2 + (quoteLines.length * lineHeight) + CONFIG.padding + (aczSeparatorSpace > 0 ? aczSeparatorSpace - 2 : 0);
 
     els.canvas.width = canvasWidth;
     els.canvas.height = canvasHeight;
@@ -310,6 +313,7 @@ async function generateSubtitle() {
         y += lineHeight / 4;
         ctx.fillStyle = color;
         ctx.fillRect(centerX - (maxW * 1.2 / 2), y, maxW * 1.2, 2);
+        y += 2; // Account for separator height
         y += lineHeight / 2;
     }
 
