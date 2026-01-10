@@ -6,6 +6,53 @@ const GRADIENTS = {
     french: ['#0055A4', '#FFFFFF', '#EF4135']
 };
 
+const COLORS = {
+    basic: [
+        { name: 'Red', hex: '#FF5555' },
+        { name: 'Orange', hex: '#FFA500' },
+        { name: 'Yellow', hex: '#FFFF55' },
+        { name: 'Lime', hex: '#32CD32' },
+        { name: 'Green', hex: '#55FF55' },
+        { name: 'Cyan', hex: '#55FFFF' },
+        { name: 'Blue', hex: '#5555FF' },
+        { name: 'Navy', hex: '#000080' },
+        { name: 'Purple', hex: '#8A2BE2' },
+        { name: 'Pink', hex: '#FF55FF' },
+        { name: 'Brown', hex: '#A52A2A' },
+        { name: 'Teal', hex: '#008080' },
+        { name: 'Gray', hex: '#B0B0B0' },
+        { name: 'White', hex: '#FFFFFF' }
+    ],
+    roles: [
+        { name: 'Priority Red', hex: '#FF0000' },
+        { name: 'Hostile Red', hex:'#e74c3c' },
+        { name: 'Peacekeeper Red', hex: '#992D22' },
+        { name: 'The Home Depot Orange', hex: '#F96302' },
+        { name: 'FakeDev Orange', hex: '#E67E22' },
+        { name: '⭐ Yellow', hex: '#fdb401' },
+        { name: 'Mad Yellow', hex: '#f1c40f' },
+        { name: 'Wikiyellow', hex: '#FFB40B' },
+        { name: 'Mercenary Yellow', hex: '#BBAD2C' },
+        { name: 'Faust/Goblin Green', hex: '#1F8b4C' },
+        { name: 'PWcord Moderator Turquoise', hex: '#1ABC9C' },
+        { name: 'Cascadian Teal', hex: '#2BBCC2' },
+        { name: 'Voice Actor Blue', hex: '#86A4C7' },
+        { name: 'Friendly Blue', hex: '#3498db' },
+        { name: 'Federation Dark Blue', hex: '#0C0D3B' },
+        { name: 'Ridel Purple', hex: '#71368A' },
+        { name: 'Gremlin Pink', hex: '#ff00dc' },
+        { name: 'Mugged Pink', hex: '#FFABF3' },
+        { name: 'Potato Brown', hex: '#c8a186' }
+    ],
+    characters: [
+        { name: 'Ikuyo Red', hex: '#d8615d' },
+        { name: 'Nijika Yellow', hex: '#f8dc88' },
+        { name: 'Bocchi Pink', hex: '#f5b2c4' },
+        { name: 'Kikuri Pink', hex: '#8e577a' },
+        { name: 'Ryo Blue', hex: '#5378af' }
+    ]
+};
+
 const CONFIG = {
     fontSize: 48,
     padding: 40,
@@ -21,6 +68,7 @@ const els = {
     quote: document.getElementById('quote'),
     colorPicker: document.getElementById('colorPicker'),
     colorText: document.getElementById('colorText'),
+    colorPreset: document.getElementById('colorPreset'),
     gradient: document.getElementById('gradient'),
     stretch: document.getElementById('stretchGradient'),
     continuous: document.getElementById('continuousGradient'),
@@ -30,8 +78,20 @@ const els = {
 };
 
 // Sync color inputs
-els.colorPicker.addEventListener('input', (e) => els.colorText.value = e.target.value);
-els.colorText.addEventListener('input', (e) => els.colorPicker.value = e.target.value);
+els.colorPicker.addEventListener('input', (e) => {
+    els.colorText.value = e.target.value;
+    els.colorPreset.value = '';
+});
+els.colorText.addEventListener('input', (e) => {
+    els.colorPicker.value = e.target.value;
+    els.colorPreset.value = '';
+});
+els.colorPreset.addEventListener('change', (e) => {
+    if (e.target.value) {
+        els.colorPicker.value = e.target.value;
+        els.colorText.value = e.target.value;
+    }
+});
 
 // Helper: Measure word width (Simplified for browser - no custom emoji parsing)
 function measureWordWidth(ctx, word) {
@@ -294,6 +354,26 @@ async function generateSubtitle() {
     });
 }
 
+function populateColorPresets() {
+    const presetEl = els.colorPreset;
+    
+    const createOptGroup = (label, colors) => {
+        const group = document.createElement('optgroup');
+        group.label = label;
+        colors.forEach(color => {
+            const option = document.createElement('option');
+            option.value = color.hex;
+            option.textContent = color.name;
+            group.appendChild(option);
+        });
+        return group;
+    };
+    
+    presetEl.appendChild(createOptGroup('Basic', COLORS.basic));
+    presetEl.appendChild(createOptGroup('Roles', COLORS.roles));
+    presetEl.appendChild(createOptGroup('Characters', COLORS.characters));
+}
+
 // Event Listeners
 els.btn.addEventListener('click', generateSubtitle);
 
@@ -305,4 +385,7 @@ els.dlBtn.addEventListener('click', () => {
 });
 
 // Initial load
-window.onload = generateSubtitle;
+window.onload = () => {
+    populateColorPresets();
+    generateSubtitle();
+};
