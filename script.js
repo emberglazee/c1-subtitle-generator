@@ -1,10 +1,25 @@
 // Configuration & Constants
+const STYLES = [
+    { value: 'pw', name: 'Project Wingman', font: 'Roboto' },
+    { value: 'ac7', name: 'Ace Combat 7', font: 'Aces07' },
+    { value: 'acz', name: 'Ace Combat Zero', font: 'Frutiger' },
+    { value: 'hd2', name: 'Helldivers 2', font: 'FSSinclair' }
+];
+
 const GRADIENTS = {
     trans: ['#55CDFC', '#F7A8B8', '#FFFFFF', '#F7A8B8', '#55CDFC'],
     rainbow: ['#FF0000', '#FFA500', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3'],
     italian: ['#009246', '#FFFFFF', '#CE2B37'],
     french: ['#0055A4', '#FFFFFF', '#EF4135']
 };
+
+const GRADIENT_OPTIONS = [
+    { value: 'none', name: 'None' },
+    { value: 'trans', name: '🏳️‍⚧️ Trans Flag' },
+    { value: 'rainbow', name: '🏳️‍🌈 LGBTQ Flag' },
+    { value: 'italian', name: '🇮🇹 Italian Flag' },
+    { value: 'french', name: '🇫🇷 French Flag' }
+];
 
 const COLORS = {
     basic: [
@@ -141,13 +156,8 @@ async function generateSubtitle() {
     const continuous = els.continuous.checked;
 
     // Font selection
-    const fontMap = {
-        'pw': 'Roboto',
-        'ac7': 'Aces07',
-        'acz': 'Frutiger',
-        'hd2': 'FSSinclair'
-    };
-    const fontFamily = fontMap[style];
+    const styleInfo = STYLES.find(s => s.value === style);
+    const fontFamily = styleInfo.font;
 
     // Ensure fonts are loaded
     await document.fonts.ready;
@@ -354,9 +364,23 @@ async function generateSubtitle() {
     });
 }
 
-function populateColorPresets() {
+function populateSelect(element, options, clear = false) {
+    if (clear) {
+        element.innerHTML = '';
+    }
+    options.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.name;
+        element.appendChild(option);
+    });
+}
+
+function populateAllOptions() {
+    populateSelect(els.style, STYLES, true);
+    populateSelect(els.gradient, GRADIENT_OPTIONS, true);
+
     const presetEl = els.colorPreset;
-    
     const createOptGroup = (label, colors) => {
         const group = document.createElement('optgroup');
         group.label = label;
@@ -386,6 +410,6 @@ els.dlBtn.addEventListener('click', () => {
 
 // Initial load
 window.onload = () => {
-    populateColorPresets();
+    populateAllOptions();
     generateSubtitle();
 };
