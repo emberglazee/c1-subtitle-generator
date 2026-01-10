@@ -2,8 +2,7 @@
 const STYLES = [
     { value:  'pw', name: 'Project Wingman (Roboto)', font: 'Roboto' },
     { value: 'ac7', name: 'Ace Combat 7 (Aces07)', font: 'Aces07' },
-    { value: 'acz', name: 'Ace Combat Zero (Frutiger)', font: 'Frutiger' },
-    { value: 'hd2', name: 'Helldivers 2 (FSSinclair)', font: 'FSSinclair' }
+    { value: 'acz', name: 'Ace Combat Zero (Frutiger)', font: 'Frutiger' }
 ];
 
 const GRADIENTS = {
@@ -167,7 +166,7 @@ async function generateSubtitle() {
     const ctx = els.canvas.getContext('2d');
 
     // Setup initial font for measurement
-    const baseFontSize = (style === 'hd2') ? 48 : CONFIG.fontSize;
+    const baseFontSize = CONFIG.fontSize;
     const fontString = `${baseFontSize}px ${fontFamily}`;
 
     // Explicitly load the font to be used, to avoid race conditions.
@@ -196,83 +195,6 @@ async function generateSubtitle() {
     // Calculate Height
     let canvasHeight = 50 + (speakerLines.length * lineHeight) + 2 + (quoteLines.length * lineHeight) + CONFIG.padding;
 
-    // HD2 has specific layout logic
-    if (style === 'hd2') {
-        // HD2 specific sizing logic
-        const hd2FontSize = Math.floor(canvasWidth * 0.025);
-        const hd2LineHeight = hd2FontSize * 1.6;
-        const hd2TextPadding = Math.floor(hd2FontSize * 1.2);
-        const hd2SpeakerTextGap = Math.floor(hd2FontSize * 0.75);
-
-        const hd2FontString = `${hd2FontSize}px ${fontFamily}`;
-        await document.fonts.load(hd2FontString);
-        ctx.font = hd2FontString; // Re-measure for HD2
-        const hd2SpeakerWidth = ctx.measureText(speaker).width;
-
-        // Recalculate wrapping for HD2 specifically
-        const maxBoxWidth = canvasWidth * 0.8;
-        const maxQuoteWidth = maxBoxWidth - hd2SpeakerWidth - hd2SpeakerTextGap - (hd2TextPadding * 2);
-
-        // Wrap HD2 lines with new font size
-        const hd2QuoteLines = [];
-        let currentLine = '';
-        quote.split(' ').forEach(word => {
-            const testLine = currentLine ? `${currentLine} ${word}` : word;
-            if (ctx.measureText(testLine).width > maxQuoteWidth) {
-                if(currentLine) hd2QuoteLines.push(currentLine);
-                currentLine = word;
-            } else {
-                currentLine = testLine;
-            }
-        });
-        if(currentLine) hd2QuoteLines.push(currentLine);
-
-        const boxHeight = hd2LineHeight * (1.2 + (hd2QuoteLines.length > 1 ? 0.4 * (hd2QuoteLines.length - 1) : 0)) +
-                (hd2QuoteLines.length > 1 ? (hd2QuoteLines.length - 1) * 10 : 0);
-
-        // Resize canvas for HD2
-        canvasWidth = 2048; // HD2 usually looks better on wide canvas
-        canvasHeight = 400; // Fixed-ish height
-        els.canvas.width = canvasWidth;
-        els.canvas.height = canvasHeight;
-
-        // Draw HD2
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-        ctx.font = hd2FontString;
-        ctx.textBaseline = 'alphabetic';
-        ctx.textAlign = 'left';
-
-        // Calculate Box Box
-        const maxTextWidth = Math.max(...hd2QuoteLines.map(l => ctx.measureText(l).width));
-        const totalBoxWidth = hd2SpeakerWidth + hd2SpeakerTextGap + maxTextWidth + (hd2TextPadding * 2);
-        const boxX = (canvasWidth - totalBoxWidth) / 2;
-        const boxY = (canvasHeight * 0.6) - (boxHeight / 2);
-
-        // Black Box
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(boxX, boxY, totalBoxWidth, boxHeight);
-
-        // Speaker
-        ctx.fillStyle = gradientType === 'none' ? '#FFE81F' : color; 
-        // (Skipping complex gradient logic for HD2 speaker for simplicity, usually yellow)
-        const speakerX = boxX + hd2TextPadding;
-        const baselineOffset = Math.floor(hd2LineHeight * 0.65);
-        ctx.fillText(speaker, speakerX, boxY + baselineOffset);
-
-        // Text
-        ctx.fillStyle = 'white';
-        const textX = speakerX + hd2SpeakerWidth + hd2SpeakerTextGap;
-        let currentY = boxY + baselineOffset;
-
-        hd2QuoteLines.forEach(line => {
-            ctx.fillText(line, textX, currentY);
-            currentY += hd2LineHeight * 0.4 + 14;
-        });
-
-        return; // End HD2
-    }
-
-    // Standard Styles (AC7, PW, ACZ)
     els.canvas.width = canvasWidth;
     els.canvas.height = canvasHeight;
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
