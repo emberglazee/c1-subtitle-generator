@@ -308,20 +308,20 @@ async function generateSubtitle() {
             });
         } else {
             // Char by Char Gradient
-            let charCount = 0;
+            let totalCharCount = 0;
             speakerLines.forEach(line => {
                 const lineWidth = ctx.measureText(line).width;
                 let currentX = centerX - (lineWidth / 2);
                 
-                for (let char of line) {
-                    const idx = continuous ? charCount : Array.from(line).indexOf(char); // Simplified index logic
-                    const colorIndex = (continuous ? charCount : line.indexOf(char)) % gradientColors.length;
+                ctx.textAlign = 'left'; // Temp switch for precise char placement
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    const colorIndex = (continuous ? totalCharCount : i) % gradientColors.length;
                     
                     ctx.fillStyle = gradientColors[colorIndex];
-                    ctx.textAlign = 'left'; // Temp switch for precise char placement
                     ctx.fillText(char, currentX, y);
                     currentX += ctx.measureText(char).width;
-                    charCount++;
+                    totalCharCount++;
                 }
                 ctx.textAlign = 'center'; // Reset
                 y += lineHeight;
