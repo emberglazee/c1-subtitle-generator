@@ -294,39 +294,92 @@ async function generateSubtitle() {
             y += lineHeight;
         });
     } else {
-        if (stretch) {
-            // Linear Gradient
-            const maxLineWidth = Math.max(...speakerLines.map(l => ctx.measureText(l).width));
-            const g = ctx.createLinearGradient(centerX - maxLineWidth/2, 0, centerX + maxLineWidth/2, 0);
-            gradientColors.forEach((c, i) => {
-                g.addColorStop(i / (gradientColors.length - 1), c);
-            });
-            ctx.fillStyle = g;
-            speakerLines.forEach(line => {
-                ctx.fillText(line, centerX, y);
+        // New, clearer gradient logic based on orthogonal stretch/continuous flags
+        let charIndex = 0;
+
+        speakerLines.forEach(line => {
+            const lineWidth = ctx.measureText(line).width;
+            if (lineWidth === 0) {
                 y += lineHeight;
-            });
-        } else {
-            // Char by Char Gradient
-            let totalCharCount = 0;
-            speakerLines.forEach(line => {
-                const lineWidth = ctx.measureText(line).width;
-                let currentX = centerX - (lineWidth / 2);
-                
-                ctx.textAlign = 'left'; // Temp switch for precise char placement
-                for (let i = 0; i < line.length; i++) {
-                    const char = line[i];
-                    const colorIndex = (continuous ? totalCharCount : i) % gradientColors.length;
-                    
-                    ctx.fillStyle = gradientColors[colorIndex];
-                    ctx.fillText(char, currentX, y);
-                    currentX += ctx.measureText(char).width;
-                    totalCharCount++;
+                return; // Skip empty lines
+            }
+            const lineXStart = centerX - lineWidth / 2;
+
+            if (continuous) {
+                // SMOOTH GRADIENT: Use a gradient or pattern for a single fillText call.
+                let gradientFill;
+                if (stretch) {
+                    // Continuous + Stretched: A single smooth gradient stretched to the line's width.
+                    const gradient = ctx.createLinearGradient(lineXStart, 0, lineXStart + lineWidth, 0);
+                    gradientColors.forEach((c, i) => {
+                        const stop = gradientColors.length > 1 ? i / (gradientColors.length - 1) : 0.5;
+                        gradient.addColorStop(stop, c);
+                    });
+                    gradientFill = gradient;
+                } else {
+                    // Continuous + Not Stretched: A smooth, repeating gradient pattern.
+                    const patternWidth = 150; // A fixed width for the repeating pattern cycle.
+                    const patternCanvas = document.createElement('canvas');
+                    patternCanvas.width = patternWidth;
+                    patternCanvas.height = 1;
+                    const pctx = patternCanvas.getContext('2d');
+                    const pat = pctx.createLinearGradient(0, 0, patternWidth, 0);
+                    gradientColors.forEach((c, i) => {
+                        const stop = gradientColors.length > 1 ? i / (gradientColors.length - 1) : 0.5;
+                        pat.addColorStop(stop, c);
+                    });
+                    pctx.fillStyle = pat;
+                    pctx.fillRect(0, 0, patternWidth, 1);
+                    gradientFill = ctx.createPattern(patternCanvas, 'repeat-x');
                 }
-                ctx.textAlign = 'center'; // Reset
-                y += lineHeight;
-            });
-        }
+
+                ctx.fillStyle = gradientFill;
+                // We must translate the canvas for the repeating pattern to be aligned with the text.
+                ctx.save();
+                ctx.translate(lineXStart, 0);
+                ctx.textAlign = 'left';
+                ctx.fillText(line, 0, y);
+                ctx.restore();
+
+            } else {
+                // PER-CHARACTER GRADIENT: Loop through each character and draw it individually.
+                let currentX = lineXStart;
+                ctx.textAlign = 'left';
+
+                if (stretch) {
+                    // Per-character + Stretched (DISCRETE): Pick solid colors from the palette, but distribute them across the line width.
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        const charWidth = ctx.measureText(char).width;
+
+                        // Calculate percentage position of the character's middle point
+                        const percentage = (currentX + charWidth / 2 - lineXStart) / lineWidth;
+
+                        // Use percentage to pick a discrete color index
+                        let colorIndex = Math.floor(percentage * gradientColors.length);
+                        // Clamp the index to be safe
+                        colorIndex = Math.min(colorIndex, gradientColors.length - 1);
+
+                        ctx.fillStyle = gradientColors[colorIndex];
+                        ctx.fillText(char, currentX, y);
+                        currentX += charWidth;
+                    }
+                } else {
+                    // Per-character + Not Stretched: Standard repeating color palette.
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        const colorIndex = (charIndex + i) % gradientColors.length;
+                        ctx.fillStyle = gradientColors[colorIndex];
+                        ctx.fillText(char, currentX, y);
+                        currentX += ctx.measureText(char).width;
+                    }
+                }
+                ctx.textAlign = 'center'; // Reset alignment
+            }
+
+            charIndex += line.length;
+            y += lineHeight;
+        });
     }
 
     // ACZ Separator
@@ -441,6 +494,50 @@ function handleAutoGenerate() {
     if (els.autoGenerate.checked) {
         generateSubtitle();
     }
+}
+
+// Helper for stretched, per-character gradients
+function getColorFromVirtualGradient(colors, percentage) {
+    // Failsafe for bad inputs
+    if (!colors || colors.length === 0) return '#FFFFFF'; // Return white on error
+    if (colors.length === 1) return colors[0];
+
+    // Clamp percentage to the valid range [0, 1] to prevent out-of-bounds errors
+    const p = Math.max(0, Math.min(1, percentage));
+
+    // Determine which two colors to interpolate between
+    const colorStop = p * (colors.length - 1);
+    const startIndex = Math.floor(colorStop);
+    const endIndex = Math.min(startIndex + 1, colors.length - 1);
+    
+    // Determine the interpolation amount between the two colors
+    const interpAmount = colorStop - startIndex;
+
+    const startColor = colors[startIndex];
+    const endColor = colors[endIndex];
+
+    // This should not happen with the clamping, but as a guard:
+    if (!startColor || !endColor) return '#FFFFFF';
+
+    // Interpolation logic
+    const sR = parseInt(startColor.substring(1, 3), 16);
+    const sG = parseInt(startColor.substring(3, 5), 16);
+    const sB = parseInt(startColor.substring(5, 7), 16);
+
+    const eR = parseInt(endColor.substring(1, 3), 16);
+    const eG = parseInt(endColor.substring(3, 5), 16);
+    const eB = parseInt(endColor.substring(5, 7), 16);
+
+    const iR = Math.floor(sR + (eR - sR) * interpAmount);
+    const iG = Math.floor(sG + (eG - sG) * interpAmount);
+    const iB = Math.floor(sB + (eB - sB) * interpAmount);
+
+    // Convert back to hex
+    const r = iR.toString(16).padStart(2, '0');
+    const g = iG.toString(16).padStart(2, '0');
+    const b = iB.toString(16).padStart(2, '0');
+    
+    return `#${r}${g}${b}`;
 }
 
 function setupAutoGenerate() {
