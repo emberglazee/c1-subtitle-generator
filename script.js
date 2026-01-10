@@ -168,7 +168,11 @@ async function generateSubtitle() {
 
     // Setup initial font for measurement
     const baseFontSize = (style === 'hd2') ? 48 : CONFIG.fontSize;
-    ctx.font = `${baseFontSize}px ${fontFamily}`;
+    const fontString = `${baseFontSize}px ${fontFamily}`;
+
+    // Explicitly load the font to be used, to avoid race conditions.
+    await document.fonts.load(fontString);
+    ctx.font = fontString;
 
     // Calculate dimensions
     const isArrowStyle = style === 'ac7' || style === 'acz';
@@ -200,7 +204,9 @@ async function generateSubtitle() {
         const hd2TextPadding = Math.floor(hd2FontSize * 1.2);
         const hd2SpeakerTextGap = Math.floor(hd2FontSize * 0.75);
 
-        ctx.font = `${hd2FontSize}px ${fontFamily}`; // Re-measure for HD2
+        const hd2FontString = `${hd2FontSize}px ${fontFamily}`;
+        await document.fonts.load(hd2FontString);
+        ctx.font = hd2FontString; // Re-measure for HD2
         const hd2SpeakerWidth = ctx.measureText(speaker).width;
 
         // Recalculate wrapping for HD2 specifically
@@ -232,7 +238,7 @@ async function generateSubtitle() {
 
         // Draw HD2
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-        ctx.font = `${hd2FontSize}px ${fontFamily}`;
+        ctx.font = hd2FontString;
         ctx.textBaseline = 'alphabetic';
         ctx.textAlign = 'left';
 
@@ -271,7 +277,7 @@ async function generateSubtitle() {
     els.canvas.height = canvasHeight;
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-    ctx.font = `${baseFontSize}px ${fontFamily}`;
+    ctx.font = fontString;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.shadowColor = 'black';
