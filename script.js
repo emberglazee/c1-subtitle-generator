@@ -1,9 +1,9 @@
 // Configuration & Constants
 const STYLES = [
-    { value: 'pw', name: 'Project Wingman', font: 'Roboto' },
-    { value: 'ac7', name: 'Ace Combat 7', font: 'Aces07' },
-    { value: 'acz', name: 'Ace Combat Zero', font: 'Frutiger' },
-    { value: 'hd2', name: 'Helldivers 2', font: 'FSSinclair' }
+    { value:  'pw', name: 'Project Wingman (Roboto)', font: 'Roboto' },
+    { value: 'ac7', name: 'Ace Combat 7 (Aces07)', font: 'Aces07' },
+    { value: 'acz', name: 'Ace Combat Zero (Frutiger)', font: 'Frutiger' },
+    { value: 'hd2', name: 'Helldivers 2 (FSSinclair)', font: 'FSSinclair' }
 ];
 
 const GRADIENTS = {
@@ -93,33 +93,30 @@ const els = {
     canvas: document.getElementById('canvas')
 };
 
-// Sync color inputs
-els.colorPicker.addEventListener('input', (e) => {
+els.colorPicker.addEventListener('input', e => {
     els.colorText.value = e.target.value;
 });
-els.colorText.addEventListener('input', (e) => {
+els.colorText.addEventListener('input', e => {
     els.colorPicker.value = e.target.value;
 });
 
-// Helper: Measure word width (Simplified for browser - no custom emoji parsing)
 function measureWordWidth(ctx, word) {
     return ctx.measureText(word).width;
 }
 
-// Logic: Wrap Text
 function wrapText(ctx, text, maxWidth) {
     const lines = [];
     text.split('\n').forEach(textLine => {
         textLine.split(' ').forEach((word, i) => {
             const wordWidth = measureWordWidth(ctx, word);
-            
+
             // If a single word is too long, we might need to break it, 
             // but for simplicity in subtitle logic, we usually just wrap.
-            
+
             // Check if adding this word exceeds max width
             const lastLineIndex = lines.length - 1;
             const isFirstWordOfBlock = i === 0;
-            
+
             if (lines.length === 0 || isFirstWordOfBlock) {
                 // Start a new line
                 lines.push(word);
@@ -138,7 +135,6 @@ function wrapText(ctx, text, maxWidth) {
     return lines;
 }
 
-// Main Generation Function
 async function generateSubtitle() {
     const style = els.style.value;
     const speaker = els.speaker.value;
@@ -169,7 +165,7 @@ async function generateSubtitle() {
     await document.fonts.ready;
 
     const ctx = els.canvas.getContext('2d');
-    
+
     // Setup initial font for measurement
     const baseFontSize = (style === 'hd2') ? 48 : CONFIG.fontSize;
     ctx.font = `${baseFontSize}px ${fontFamily}`;
@@ -177,11 +173,11 @@ async function generateSubtitle() {
     // Calculate dimensions
     const isArrowStyle = style === 'ac7' || style === 'acz';
     const extraWidth = isArrowStyle ? CONFIG.arrowQuoteWidth : 0;
-    
+
     // Simple width calculation based on text length
     const speakerWidth = ctx.measureText(speaker).width;
     const quoteWidth = ctx.measureText(quote).width; // Rough estimate before wrapping
-    
+
     // Calculate effective width for wrapping
     // We want to target a canvas width between min and max
     let canvasWidth = Math.max(CONFIG.minWidth, Math.min(Math.max(speakerWidth, quoteWidth) + CONFIG.padding * 2 + extraWidth, CONFIG.maxWidth));
@@ -192,10 +188,10 @@ async function generateSubtitle() {
     const quoteLines = wrapText(ctx, quote, effectiveMaxWidth);
 
     const lineHeight = baseFontSize * 1.2;
-    
+
     // Calculate Height
     let canvasHeight = 50 + (speakerLines.length * lineHeight) + 2 + (quoteLines.length * lineHeight) + CONFIG.padding;
-    
+
     // HD2 has specific layout logic
     if (style === 'hd2') {
         // HD2 specific sizing logic
@@ -203,14 +199,14 @@ async function generateSubtitle() {
         const hd2LineHeight = hd2FontSize * 1.6;
         const hd2TextPadding = Math.floor(hd2FontSize * 1.2);
         const hd2SpeakerTextGap = Math.floor(hd2FontSize * 0.75);
-        
+
         ctx.font = `${hd2FontSize}px ${fontFamily}`; // Re-measure for HD2
         const hd2SpeakerWidth = ctx.measureText(speaker).width;
-        
+
         // Recalculate wrapping for HD2 specifically
         const maxBoxWidth = canvasWidth * 0.8;
         const maxQuoteWidth = maxBoxWidth - hd2SpeakerWidth - hd2SpeakerTextGap - (hd2TextPadding * 2);
-        
+
         // Wrap HD2 lines with new font size
         const hd2QuoteLines = [];
         let currentLine = '';
@@ -227,19 +223,19 @@ async function generateSubtitle() {
 
         const boxHeight = hd2LineHeight * (1.2 + (hd2QuoteLines.length > 1 ? 0.4 * (hd2QuoteLines.length - 1) : 0)) +
                 (hd2QuoteLines.length > 1 ? (hd2QuoteLines.length - 1) * 10 : 0);
-        
+
         // Resize canvas for HD2
         canvasWidth = 2048; // HD2 usually looks better on wide canvas
         canvasHeight = 400; // Fixed-ish height
         els.canvas.width = canvasWidth;
         els.canvas.height = canvasHeight;
-        
+
         // Draw HD2
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         ctx.font = `${hd2FontSize}px ${fontFamily}`;
         ctx.textBaseline = 'alphabetic';
         ctx.textAlign = 'left';
-        
+
         // Calculate Box Box
         const maxTextWidth = Math.max(...hd2QuoteLines.map(l => ctx.measureText(l).width));
         const totalBoxWidth = hd2SpeakerWidth + hd2SpeakerTextGap + maxTextWidth + (hd2TextPadding * 2);
@@ -261,7 +257,7 @@ async function generateSubtitle() {
         ctx.fillStyle = 'white';
         const textX = speakerX + hd2SpeakerWidth + hd2SpeakerTextGap;
         let currentY = boxY + baselineOffset;
-        
+
         hd2QuoteLines.forEach(line => {
             ctx.fillText(line, textX, currentY);
             currentY += hd2LineHeight * 0.4 + 14;
@@ -274,7 +270,7 @@ async function generateSubtitle() {
     els.canvas.width = canvasWidth;
     els.canvas.height = canvasHeight;
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    
+
     ctx.font = `${baseFontSize}px ${fontFamily}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
@@ -294,7 +290,6 @@ async function generateSubtitle() {
             y += lineHeight;
         });
     } else {
-        // New, clearer gradient logic based on orthogonal stretch/continuous flags
         let charIndex = 0;
 
         speakerLines.forEach(line => {
@@ -334,7 +329,7 @@ async function generateSubtitle() {
                 }
 
                 ctx.fillStyle = gradientFill;
-                // We must translate the canvas for the repeating pattern to be aligned with the text.
+                // Translate the canvas for the repeating pattern to be aligned with the text.
                 ctx.save();
                 ctx.translate(lineXStart, 0);
                 ctx.textAlign = 'left';
@@ -342,7 +337,6 @@ async function generateSubtitle() {
                 ctx.restore();
 
             } else {
-                // PER-CHARACTER GRADIENT: Loop through each character and draw it individually.
                 let currentX = lineXStart;
                 ctx.textAlign = 'left';
 
@@ -397,7 +391,7 @@ async function generateSubtitle() {
 
     quoteLines.forEach((line, i) => {
         let lineX = centerX;
-        
+
         // Arrows for AC7/ACZ
         if (isArrowStyle) {
             const lineWidth = ctx.measureText(line).width;
@@ -552,7 +546,7 @@ function setupAutoGenerate() {
 
     Object.values(els).forEach(element => {
         if (element.id !== 'generateBtn' && element.id !== 'downloadBtn' && element.id !== 'autoGenerate') {
-             const event = (element.type === 'text' || element.type === 'textarea') ? 'input' : 'change';
+            const event = (element.type === 'text' || element.type === 'textarea') ? 'input' : 'change';
             element.addEventListener(event, handleAutoGenerate);
         }
     });
@@ -560,10 +554,9 @@ function setupAutoGenerate() {
     document.querySelectorAll('input[name="colorType"]').forEach(radio => {
         radio.addEventListener('change', handleAutoGenerate);
     });
-    
+
     toggleGenerateButton();
 }
-
 
 // Event Listeners
 els.btn.addEventListener('click', generateSubtitle);
@@ -581,4 +574,5 @@ window.onload = () => {
     setupColorControls();
     setupAutoGenerate();
     generateSubtitle();
+    console.log('Subtitle Generator Loaded');
 };
