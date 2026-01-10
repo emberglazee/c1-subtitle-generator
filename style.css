@@ -1,6 +1,7 @@
 @font-face { font-family: 'Roboto'; src: url('fonts/Roboto.ttf'); }
 @font-face { font-family: 'Aces07'; src: url('fonts/Aces07.ttf'); }
 @font-face { font-family: 'Frutiger'; src: url('fonts/Frutiger.ttf'); }
+@font-face { font-family: 'Folio-Std-Light'; src: url('fonts/Folio-Std-Light.ttf'); }
 
 body {
     background-color: #121212;

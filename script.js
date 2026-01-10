@@ -2,7 +2,8 @@
 const STYLES = [
     { value:  'pw', name: 'Project Wingman (Roboto)', font: 'Roboto' },
     { value: 'ac7', name: 'Ace Combat 7 (Aces07)', font: 'Aces07' },
-    { value: 'acz', name: 'Ace Combat Zero (Frutiger)', font: 'Frutiger' }
+    { value: 'acz', name: 'Ace Combat Zero (Frutiger)', font: 'Frutiger' },
+    { value: 'ac6', name: 'Armored Core 6 (Folio)', font: 'Folio-Std-Light' }
 ];
 
 const GRADIENTS = {
@@ -89,7 +90,9 @@ const els = {
     autoGenerate: document.getElementById('autoGenerate'),
     btn: document.getElementById('generateBtn'),
     dlBtn: document.getElementById('downloadBtn'),
-    canvas: document.getElementById('canvas')
+    canvas: document.getElementById('canvas'),
+    ac6Options: document.getElementById('ac6-options'),
+    ac6ForceColor: document.getElementById('ac6ForceColor')
 };
 
 els.colorPicker.addEventListener('input', e => {
@@ -156,6 +159,12 @@ async function generateSubtitle() {
     const stretch = els.stretch.checked;
     const continuous = els.continuous.checked;
 
+    const ac6ForceColor = els.ac6ForceColor.checked;
+    let displayColor = color;
+    if (style === 'ac6' && !ac6ForceColor) {
+        displayColor = '#FFFFFF';
+    }
+
     // Font selection
     const styleInfo = STYLES.find(s => s.value === style);
     const fontFamily = styleInfo.font;
@@ -175,6 +184,7 @@ async function generateSubtitle() {
 
     // Calculate dimensions
     const isArrowStyle = style === 'ac7' || style === 'acz';
+    const isSeparatorStyle = style === 'acz' || style === 'ac6';
     const extraWidth = isArrowStyle ? CONFIG.arrowQuoteWidth : 0;
 
     // Simple width calculation based on text length
@@ -192,11 +202,11 @@ async function generateSubtitle() {
 
     const lineHeight = baseFontSize * 1.2;
 
-    // Calculate separator space for ACZ style to be added to the canvas height
-    const aczSeparatorSpace = style === 'acz' ? (lineHeight / 4) + (lineHeight / 2) + 2 : 0;
+    // Calculate separator space for ACZ/AC6 style to be added to the canvas height
+    const separatorSpace = isSeparatorStyle ? (lineHeight / 4) + (lineHeight / 2) + 2 : 0;
 
     // Calculate Height
-    let canvasHeight = 50 + (speakerLines.length * lineHeight) + 2 + (quoteLines.length * lineHeight) + CONFIG.padding + (aczSeparatorSpace > 0 ? aczSeparatorSpace - 2 : 0);
+    let canvasHeight = 50 + (speakerLines.length * lineHeight) + 2 + (quoteLines.length * lineHeight) + CONFIG.padding + (separatorSpace > 0 ? separatorSpace - 2 : 0);
 
     els.canvas.width = canvasWidth;
     els.canvas.height = canvasHeight;
@@ -215,7 +225,7 @@ async function generateSubtitle() {
     const gradientColors = GRADIENTS[gradientType];
 
     if (gradientType === 'none') {
-        ctx.fillStyle = color;
+        ctx.fillStyle = displayColor;
         speakerLines.forEach(line => {
             ctx.fillText(line, centerX, y);
             y += lineHeight;
@@ -307,18 +317,34 @@ async function generateSubtitle() {
         });
     }
 
-    // ACZ Separator
-    if (style === 'acz') {
+    // ACZ/AC6 Separator
+    if (isSeparatorStyle) {
         const maxW = Math.max(...speakerLines.map(l => ctx.measureText(l).width));
+        const separatorWidth = maxW * 1.2;
+        const separatorX = centerX - separatorWidth / 2;
         y += lineHeight / 4;
-        ctx.fillStyle = color;
-        ctx.fillRect(centerX - (maxW * 1.2 / 2), y, maxW * 1.2, 2);
+
+        let fill = displayColor;
+        if (style === 'ac6') {
+            const gradient = ctx.createLinearGradient(separatorX, 0, separatorX + separatorWidth, 0);
+            const transparentRgba = `rgba(${parseInt(displayColor.slice(1, 3), 16)}, ${parseInt(displayColor.slice(3, 5), 16)}, ${parseInt(displayColor.slice(5, 7), 16)}, 0)`;
+
+            gradient.addColorStop(0, transparentRgba);
+            gradient.addColorStop(0.15, displayColor);
+            gradient.addColorStop(0.85, displayColor);
+            gradient.addColorStop(1, transparentRgba);
+            
+            fill = gradient;
+        }
+        ctx.fillStyle = fill;
+        ctx.fillRect(separatorX, y, separatorWidth, 2);
+        
         y += 2; // Account for separator height
         y += lineHeight / 2;
     }
 
     // Draw Quote
-    ctx.fillStyle = (style === 'acz') ? color : 'white';
+    ctx.fillStyle = style === 'acz' ? displayColor : 'white';
     y += 2;
 
     quoteLines.forEach((line, i) => {
@@ -332,13 +358,13 @@ async function generateSubtitle() {
 
             if (i === 0) {
                 ctx.save();
-                ctx.fillStyle = (gradientType === 'none') ? color : gradientColors[0];
+                ctx.fillStyle = (gradientType === 'none') ? displayColor : gradientColors[0];
                 ctx.fillText('<<', leftX, y);
                 ctx.restore();
             }
             if (i === quoteLines.length - 1) {
                 ctx.save();
-                ctx.fillStyle = (gradientType === 'none') ? color : gradientColors[gradientColors.length - 1];
+                ctx.fillStyle = (gradientType === 'none') ? displayColor : gradientColors[gradientColors.length - 1];
                 ctx.fillText('>>', rightX, y);
                 ctx.restore();
             }
@@ -380,6 +406,11 @@ function setupColorControls() {
 
     // Initial call
     updateColorControlVisibility();
+}
+
+function updateStyleSpecificControls() {
+    const style = els.style.value;
+    els.ac6Options.style.display = style === 'ac6' ? 'block' : 'none';
 }
 
 function populateSelect(element, options, clear = false) {
@@ -492,6 +523,7 @@ function setupAutoGenerate() {
 
 // Event Listeners
 els.btn.addEventListener('click', generateSubtitle);
+els.style.addEventListener('change', updateStyleSpecificControls);
 
 els.dlBtn.addEventListener('click', () => {
     const link = document.createElement('a');
@@ -504,6 +536,7 @@ els.dlBtn.addEventListener('click', () => {
 window.onload = () => {
     populateAllOptions();
     setupColorControls();
+    updateStyleSpecificControls();
     setupAutoGenerate();
     generateSubtitle();
     console.log('Subtitle Generator Loaded');
