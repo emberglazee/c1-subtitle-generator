@@ -1,0 +1,86 @@
+@font-face { font-family: 'Roboto'; src: url('fonts/Roboto.ttf'); }
+@font-face { font-family: 'Aces07'; src: url('fonts/Aces07.ttf'); }
+@font-face { font-family: 'Frutiger'; src: url('fonts/Frutiger.ttf'); }
+@font-face { font-family: 'FSSinclair'; src: url('fonts/FSSinclair.otf'); }
+
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+}
+
+h1 { grid-column: 1 / -1; text-align: center; color: #ff5555; }
+
+.controls {
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 8px;
+    height: fit-content;
+}
+
+.control-group { margin-bottom: 15px; }
+.control-group label { display: block; margin-bottom: 5px; font-size: 0.9em; color: #aaa; }
+.control-group input[type="text"], 
+.control-group textarea, 
+.control-group select {
+    width: 100%;
+    background: #2d2d2d;
+    border: 1px solid #444;
+    color: white;
+    padding: 8px;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.checkbox-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 20px; }
+
+button {
+    width: 100%;
+    padding: 10px;
+    background: #ff5555;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+button:hover { background: #ff7777; }
+button.secondary { background: #444; }
+button.secondary:hover { background: #555; }
+
+.preview-area {
+    background: #0e0e0e;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    border: 1px solid #333;
+    /* Simulate a game screen aspect */
+    min-height: 400px;
+    background-image: linear-gradient(45deg, #151515 25%, transparent 25%), 
+                      linear-gradient(-45deg, #151515 25%, transparent 25%), 
+                      linear-gradient(45deg, transparent 75%, #151515 75%), 
+                      linear-gradient(-45deg, transparent 75%, #151515 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+canvas { max-width: 100%; height: auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+
+@media (max-width: 800px) {
+    .container { grid-template-columns: 1fr; }
+}

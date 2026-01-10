@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crimson Subtitle Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Subtitle Generator</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="style">Style</label>
+                <select id="style">
+                    <option value="pw">Project Wingman</option>
+                    <option value="ac7">Ace Combat 7</option>
+                    <option value="acz">Ace Combat Zero</option>
+                    <option value="hd2">Helldivers 2</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="speaker">Speaker Name</label>
+                <input type="text" id="speaker" placeholder="Crimson 1" value="Crimson 1">
+            </div>
+
+            <div class="control-group">
+                <label for="quote">Quote</label>
+                <textarea id="quote" rows="3" placeholder="Enter text here...">You're a slave to history.</textarea>
+            </div>
+
+            <div class="control-group">
+                <label for="color">Speaker Color (Hex)</label>
+                <input type="color" id="colorPicker" value="#FF0000">
+                <input type="text" id="colorText" value="#FF0000">
+            </div>
+
+            <div class="control-group">
+                <label for="gradient">Gradient</label>
+                <select id="gradient">
+                    <option value="none">None</option>
+                    <option value="trans">Trans Flag</option>
+                    <option value="rainbow">Rainbow</option>
+                    <option value="italian">Italian Flag</option>
+                    <option value="french">French Flag</option>
+                </select>
+            </div>
+
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="stretchGradient"> Stretch Gradient</label>
+                <label><input type="checkbox" id="continuousGradient"> Continuous Gradient</label>
+            </div>
+
+            <button id="generateBtn">Generate</button>
+            <button id="downloadBtn" class="secondary">Download Image</button>
+        </div>
+
+        <div class="preview-area">
+            <canvas id="canvas"></canvas>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
