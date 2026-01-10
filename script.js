@@ -87,6 +87,7 @@ const els = {
     gradient: document.getElementById('gradient'),
     stretch: document.getElementById('stretchGradient'),
     continuous: document.getElementById('continuousGradient'),
+    autoGenerate: document.getElementById('autoGenerate'),
     btn: document.getElementById('generateBtn'),
     dlBtn: document.getElementById('downloadBtn'),
     canvas: document.getElementById('canvas')
@@ -95,17 +96,9 @@ const els = {
 // Sync color inputs
 els.colorPicker.addEventListener('input', (e) => {
     els.colorText.value = e.target.value;
-    els.colorPreset.value = '';
 });
 els.colorText.addEventListener('input', (e) => {
     els.colorPicker.value = e.target.value;
-    els.colorPreset.value = '';
-});
-els.colorPreset.addEventListener('change', (e) => {
-    if (e.target.value) {
-        els.colorPicker.value = e.target.value;
-        els.colorText.value = e.target.value;
-    }
 });
 
 // Helper: Measure word width (Simplified for browser - no custom emoji parsing)
@@ -150,8 +143,21 @@ async function generateSubtitle() {
     const style = els.style.value;
     const speaker = els.speaker.value;
     const quote = els.quote.value;
-    const color = els.colorText.value;
-    const gradientType = els.gradient.value;
+
+    const selectedColorType = document.querySelector('input[name="colorType"]:checked').value;
+    let color;
+    switch (selectedColorType) {
+        case 'preset':
+            color = els.colorPreset.value;
+            break;
+        case 'custom':
+        default:
+            color = els.colorText.value;
+            break;
+    }
+
+    const gradientType = selectedColorType === 'gradient' ? els.gradient.value : 'none';
+
     const stretch = els.stretch.checked;
     const continuous = els.continuous.checked;
 
@@ -364,6 +370,39 @@ async function generateSubtitle() {
     });
 }
 
+function setupColorControls() {
+    const colorTypeRadios = document.querySelectorAll('input[name="colorType"]');
+    const customColorGroup = document.getElementById('customColor-group');
+    const presetGroup = document.getElementById('preset-group');
+    const gradientGroup = document.getElementById('gradient-group');
+    const gradientOptionsGroup = document.querySelector('.checkbox-group');
+
+    function updateColorControlVisibility() {
+        const selectedType = document.querySelector('input[name="colorType"]:checked').value;
+
+        customColorGroup.style.display = 'none';
+        presetGroup.style.display = 'none';
+        gradientGroup.style.display = 'none';
+        gradientOptionsGroup.style.display = 'none';
+
+        if (selectedType === 'custom') {
+            customColorGroup.style.display = 'block';
+        } else if (selectedType === 'preset') {
+            presetGroup.style.display = 'block';
+        } else if (selectedType === 'gradient') {
+            gradientGroup.style.display = 'block';
+            gradientOptionsGroup.style.display = 'flex';
+        }
+    }
+
+    colorTypeRadios.forEach(radio => {
+        radio.addEventListener('change', updateColorControlVisibility);
+    });
+
+    // Initial call
+    updateColorControlVisibility();
+}
+
 function populateSelect(element, options, clear = false) {
     if (clear) {
         element.innerHTML = '';
@@ -398,6 +437,37 @@ function populateAllOptions() {
     presetEl.appendChild(createOptGroup('Characters', COLORS.characters));
 }
 
+function handleAutoGenerate() {
+    if (els.autoGenerate.checked) {
+        generateSubtitle();
+    }
+}
+
+function setupAutoGenerate() {
+    const toggleGenerateButton = () => {
+        els.btn.style.display = els.autoGenerate.checked ? 'none' : 'block';
+    };
+
+    els.autoGenerate.addEventListener('change', () => {
+        toggleGenerateButton();
+        handleAutoGenerate();
+    });
+
+    Object.values(els).forEach(element => {
+        if (element.id !== 'generateBtn' && element.id !== 'downloadBtn' && element.id !== 'autoGenerate') {
+             const event = (element.type === 'text' || element.type === 'textarea') ? 'input' : 'change';
+            element.addEventListener(event, handleAutoGenerate);
+        }
+    });
+
+    document.querySelectorAll('input[name="colorType"]').forEach(radio => {
+        radio.addEventListener('change', handleAutoGenerate);
+    });
+    
+    toggleGenerateButton();
+}
+
+
 // Event Listeners
 els.btn.addEventListener('click', generateSubtitle);
 
@@ -411,5 +481,7 @@ els.dlBtn.addEventListener('click', () => {
 // Initial load
 window.onload = () => {
     populateAllOptions();
+    setupColorControls();
+    setupAutoGenerate();
     generateSubtitle();
 };

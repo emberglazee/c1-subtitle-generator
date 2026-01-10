@@ -35,19 +35,35 @@
             </div>
 
             <div class="control-group">
+                <label>Color Type</label>
+                <div class="radio-group-container" id="colorType-radios">
+                    <label>
+                        <input type="radio" name="colorType" value="custom" checked>
+                        <span>Custom</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="colorType" value="preset">
+                        <span>Preset</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="colorType" value="gradient">
+                        <span>Gradient</span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="customColor-group" class="control-group">
                 <label for="color">Speaker Color (Hex)</label>
                 <input type="color" id="colorPicker" value="#FF0000">
                 <input type="text" id="colorText" value="#FF0000">
             </div>
 
-            <div class="control-group">
+            <div id="preset-group" class="control-group" style="display: none;">
                 <label for="colorPreset">Color Presets</label>
-                <select id="colorPreset">
-                    <option value="">Custom</option>
-                </select>
+                <select id="colorPreset"></select>
             </div>
 
-            <div class="control-group">
+            <div id="gradient-group" class="control-group" style="display: none;">
                 <label for="gradient">Gradient</label>
                 <select id="gradient"></select>
             </div>
@@ -55,6 +71,10 @@
             <div class="checkbox-group">
                 <label><input type="checkbox" id="stretchGradient"> Stretch Gradient</label>
                 <label><input type="checkbox" id="continuousGradient"> Continuous Gradient</label>
+            </div>
+
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="autoGenerate" checked> Auto-generate on change</label>
             </div>
 
             <button id="generateBtn">Generate</button>
