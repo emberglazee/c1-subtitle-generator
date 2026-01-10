@@ -320,25 +320,32 @@ async function generateSubtitle() {
     // ACZ/AC6 Separator
     if (isSeparatorStyle) {
         const maxW = Math.max(...speakerLines.map(l => ctx.measureText(l).width));
-        const separatorWidth = maxW * 1.2;
-        const separatorX = centerX - separatorWidth / 2;
+        let separatorWidth;
+        let separatorX;
+
         y += lineHeight / 4;
 
         let fill = displayColor;
         if (style === 'ac6') {
+            separatorWidth = 800; // Fixed length for AC6
+            separatorX = centerX - separatorWidth / 2;
+
             const gradient = ctx.createLinearGradient(separatorX, 0, separatorX + separatorWidth, 0);
             const transparentRgba = `rgba(${parseInt(displayColor.slice(1, 3), 16)}, ${parseInt(displayColor.slice(3, 5), 16)}, ${parseInt(displayColor.slice(5, 7), 16)}, 0)`;
 
             gradient.addColorStop(0, transparentRgba);
-            gradient.addColorStop(0.15, displayColor);
-            gradient.addColorStop(0.85, displayColor);
+            gradient.addColorStop(0.25, displayColor);
+            gradient.addColorStop(0.75, displayColor);
             gradient.addColorStop(1, transparentRgba);
-            
+
             fill = gradient;
+        } else { // ACZ
+            separatorWidth = maxW * 1.2;
+            separatorX = centerX - separatorWidth / 2;
         }
         ctx.fillStyle = fill;
         ctx.fillRect(separatorX, y, separatorWidth, 2);
-        
+
         y += 2; // Account for separator height
         y += lineHeight / 2;
     }
