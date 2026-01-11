@@ -63,10 +63,32 @@
                 <label for="colorPreset">Color Presets</label>
                 <select id="colorPreset"></select>
             </div>
+            
+            <div id="gradient-options-container" style="display: none;">
+                <div class="control-group">
+                    <label>Gradient Type</label>
+                    <div class="radio-group-container" id="gradientType-radios">
+                        <label>
+                            <input type="radio" name="gradientType" value="preset" checked>
+                            <span>Preset</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="gradientType" value="custom">
+                            <span>Custom</span>
+                        </label>
+                    </div>
+                </div>
 
-            <div id="gradient-group" class="control-group" style="display: none;">
-                <label for="gradient">Gradient</label>
-                <select id="gradient"></select>
+                <div id="gradient-group" class="control-group">
+                    <label for="gradient">Gradient Presets</label>
+                    <select id="gradient"></select>
+                </div>
+    
+                <div id="custom-gradient-group" class="control-group" style="display: none;">
+                    <label>Custom Gradient Colors</label>
+                    <div id="custom-gradient-colors"></div>
+                    <button type="button" id="addCustomGradientColorBtn" class="small-button">+ Add Color</button>
+                </div>
             </div>
 
             <div class="checkbox-group">

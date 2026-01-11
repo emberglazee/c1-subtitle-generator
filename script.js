@@ -10,7 +10,8 @@ const GRADIENTS = {
     trans: ['#55CDFC', '#F7A8B8', '#FFFFFF', '#F7A8B8', '#55CDFC'],
     rainbow: ['#FF0000', '#FFA500', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3'],
     italian: ['#009246', '#FFFFFF', '#CE2B37'],
-    french: ['#0055A4', '#FFFFFF', '#EF4135']
+    french: ['#0055A4', '#FFFFFF', '#EF4135'],
+    ireland: ['#009A49', '#FFFFFF', '#FF7900']
 };
 
 const GRADIENT_OPTIONS = [
@@ -18,7 +19,8 @@ const GRADIENT_OPTIONS = [
     { value: 'trans', name: '🏳️‍⚧️ Trans Flag' },
     { value: 'rainbow', name: '🏳️‍🌈 LGBTQ Flag' },
     { value: 'italian', name: '🇮🇹 Italian Flag' },
-    { value: 'french', name: '🇫🇷 French Flag' }
+    { value: 'french', name: '🇫🇷 French Flag' },
+    { value: 'ireland', name: '🇮🇪 Irish Flag' }
 ];
 
 const COLORS = {
@@ -144,9 +146,27 @@ async function generateSubtitle() {
 
     const selectedColorType = document.querySelector('input[name="colorType"]:checked').value;
     let color;
+    let gradientColors;
+    const isGradient = selectedColorType === 'gradient';
+
     switch (selectedColorType) {
         case 'preset':
             color = els.colorPreset.value;
+            break;
+        case 'gradient':
+            const selectedGradientType = document.querySelector('input[name="gradientType"]:checked').value;
+            if (selectedGradientType === 'preset') {
+                const preset = els.gradient.value;
+                if (preset !== 'none') {
+                    gradientColors = GRADIENTS[preset];
+                }
+            } else { // 'custom'
+                const colorItems = document.querySelectorAll('#custom-gradient-colors .custom-gradient-color-item input[type="text"]');
+                gradientColors = Array.from(colorItems).map(input => input.value).filter(Boolean);
+                if (gradientColors.length === 0) {
+                    gradientColors = ['#FFFFFF']; // Fallback
+                }
+            }
             break;
         case 'custom':
         default:
@@ -154,13 +174,18 @@ async function generateSubtitle() {
             break;
     }
 
-    const gradientType = selectedColorType === 'gradient' ? els.gradient.value : 'none';
-
     const stretch = els.stretch.checked;
     const continuous = els.continuous.checked;
 
+    // Determine the primary color for non-gradient elements (separators, arrows)
+    let displayColor;
+    if (isGradient && gradientColors && gradientColors.length > 0) {
+        displayColor = gradientColors[0];
+    } else {
+        displayColor = color || els.colorText.value;
+    }
+
     const ac6ForceColor = els.ac6ForceColor.checked;
-    let displayColor = color;
     if (style === 'ac6' && !ac6ForceColor) {
         displayColor = '#FFFFFF';
     }
@@ -222,9 +247,7 @@ async function generateSubtitle() {
     let y = 50;
 
     // Draw Speaker
-    const gradientColors = GRADIENTS[gradientType];
-
-    if (gradientType === 'none') {
+    if (!isGradient || !gradientColors || gradientColors.length === 0) {
         ctx.fillStyle = displayColor;
         speakerLines.forEach(line => {
             ctx.fillText(line, centerX, y);
@@ -365,13 +388,13 @@ async function generateSubtitle() {
 
             if (i === 0) {
                 ctx.save();
-                ctx.fillStyle = (gradientType === 'none') ? displayColor : gradientColors[0];
+                ctx.fillStyle = (isGradient && gradientColors) ? gradientColors[0] : displayColor;
                 ctx.fillText('<<', leftX, y);
                 ctx.restore();
             }
             if (i === quoteLines.length - 1) {
                 ctx.save();
-                ctx.fillStyle = (gradientType === 'none') ? displayColor : gradientColors[gradientColors.length - 1];
+                ctx.fillStyle = (isGradient && gradientColors) ? gradientColors[gradientColors.length - 1] : displayColor;
                 ctx.fillText('>>', rightX, y);
                 ctx.restore();
             }
@@ -386,15 +409,25 @@ function setupColorControls() {
     const colorTypeRadios = document.querySelectorAll('input[name="colorType"]');
     const customColorGroup = document.getElementById('customColor-group');
     const presetGroup = document.getElementById('preset-group');
-    const gradientGroup = document.getElementById('gradient-group');
+    const gradientOptionsContainer = document.getElementById('gradient-options-container');
     const gradientOptionsGroup = document.querySelector('.checkbox-group');
+
+    const gradientTypeRadios = document.querySelectorAll('input[name="gradientType"]');
+    const presetGradientGroup = document.getElementById('gradient-group');
+    const customGradientGroup = document.getElementById('custom-gradient-group');
+
+    function updateGradientControlVisibility() {
+        const selectedGradientType = document.querySelector('input[name="gradientType"]:checked').value;
+        presetGradientGroup.style.display = selectedGradientType === 'preset' ? 'block' : 'none';
+        customGradientGroup.style.display = selectedGradientType === 'custom' ? 'block' : 'none';
+    }
 
     function updateColorControlVisibility() {
         const selectedType = document.querySelector('input[name="colorType"]:checked').value;
 
         customColorGroup.style.display = 'none';
         presetGroup.style.display = 'none';
-        gradientGroup.style.display = 'none';
+        gradientOptionsContainer.style.display = 'none';
         gradientOptionsGroup.style.display = 'none';
 
         if (selectedType === 'custom') {
@@ -402,13 +435,24 @@ function setupColorControls() {
         } else if (selectedType === 'preset') {
             presetGroup.style.display = 'block';
         } else if (selectedType === 'gradient') {
-            gradientGroup.style.display = 'block';
+            gradientOptionsContainer.style.display = 'block';
             gradientOptionsGroup.style.display = 'flex';
+            updateGradientControlVisibility();
         }
     }
 
     colorTypeRadios.forEach(radio => {
-        radio.addEventListener('change', updateColorControlVisibility);
+        radio.addEventListener('change', () => {
+            updateColorControlVisibility();
+            handleAutoGenerate();
+        });
+    });
+    
+    gradientTypeRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            updateGradientControlVisibility();
+            handleAutoGenerate();
+        });
     });
 
     // Initial call
@@ -528,6 +572,56 @@ function setupAutoGenerate() {
     toggleGenerateButton();
 }
 
+function setupCustomGradientControls() {
+    const container = document.getElementById('custom-gradient-colors');
+
+    function addColorPicker(color = '#FFFFFF') {
+        const colorItem = document.createElement('div');
+        colorItem.className = 'custom-gradient-color-item';
+
+        const colorPicker = document.createElement('input');
+        colorPicker.type = 'color';
+        colorPicker.value = color;
+
+        const colorText = document.createElement('input');
+        colorText.type = 'text';
+        colorText.value = color;
+        colorText.maxLength = 7;
+
+        colorPicker.addEventListener('input', () => { colorText.value = colorPicker.value; handleAutoGenerate(); });
+        colorText.addEventListener('input', () => { 
+            if (/^#[0-9a-f]{6}$/i.test(colorText.value)) {
+                colorPicker.value = colorText.value;
+                handleAutoGenerate();
+            }
+        });
+
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '×';
+        removeBtn.className = 'remove-color-btn';
+        removeBtn.type = 'button';
+        removeBtn.title = 'Remove color';
+        removeBtn.addEventListener('click', () => {
+            colorItem.remove();
+            handleAutoGenerate();
+        });
+
+        colorItem.appendChild(colorPicker);
+        colorItem.appendChild(colorText);
+        colorItem.appendChild(removeBtn);
+        container.appendChild(colorItem);
+    }
+
+    document.getElementById('addCustomGradientColorBtn').addEventListener('click', () => {
+        addColorPicker();
+        handleAutoGenerate();
+    });
+
+    // Add some default colors
+    addColorPicker('#FF0000');
+    addColorPicker('#0000FF');
+}
+
 // Event Listeners
 els.btn.addEventListener('click', generateSubtitle);
 els.style.addEventListener('change', updateStyleSpecificControls);
@@ -543,6 +637,7 @@ els.dlBtn.addEventListener('click', () => {
 window.onload = () => {
     populateAllOptions();
     setupColorControls();
+    setupCustomGradientControls();
     updateStyleSpecificControls();
     setupAutoGenerate();
     generateSubtitle();
