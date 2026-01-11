@@ -92,6 +92,7 @@ const els = {
     autoGenerate: document.getElementById('autoGenerate'),
     btn: document.getElementById('generateBtn'),
     dlBtn: document.getElementById('downloadBtn'),
+    copyBtn: document.getElementById('copyBtn'),
     canvas: document.getElementById('canvas'),
     ac6Options: document.getElementById('ac6-options'),
     ac6ForceColor: document.getElementById('ac6ForceColor')
@@ -631,6 +632,33 @@ els.dlBtn.addEventListener('click', () => {
     link.download = `subtitle-${Date.now()}.png`;
     link.href = els.canvas.toDataURL();
     link.click();
+});
+
+els.copyBtn.addEventListener('click', () => {
+    els.canvas.toBlob(blob => {
+        if (!blob) {
+            alert('Failed to create image blob for copying.');
+            return;
+        }
+        if (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) {
+            navigator.clipboard.write([
+                new ClipboardItem({ 'image/png': blob })
+            ]).then(() => {
+                const originalText = els.copyBtn.textContent;
+                els.copyBtn.textContent = 'Copied!';
+                els.copyBtn.disabled = true;
+                setTimeout(() => {
+                    els.copyBtn.textContent = originalText;
+                    els.copyBtn.disabled = false;
+                }, 2000);
+            }).catch(err => {
+                console.error('Could not copy image to clipboard: ', err);
+                alert('Failed to copy image. Your browser might not support it or permissions were denied.');
+            });
+        } else {
+            alert('Copying images to clipboard is not supported by your browser.');
+        }
+    }, 'image/png');
 });
 
 // Initial load
