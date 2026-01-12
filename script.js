@@ -93,7 +93,8 @@ const els = {
     copyBtn: document.getElementById('copyBtn'),
     canvas: document.getElementById('canvas'),
     ac6Options: document.getElementById('ac6-options'),
-    ac6ForceColor: document.getElementById('ac6ForceColor')
+    ac6ForceColor: document.getElementById('ac6ForceColor'),
+    colorOptionsWrapper: document.getElementById('color-options-wrapper')
 };
 
 els.colorPicker.addEventListener('input', e => {
@@ -467,9 +468,16 @@ function setupColorControls() {
     updateColorControlVisibility();
 }
 
-function updateStyleSpecificControls() {
+function updateUIVisibility() {
     const style = els.style.value;
+    const ac6ForceColor = els.ac6ForceColor.checked;
+
+    // Show/hide the 'Force Speaker Color' option itself
     els.ac6Options.style.display = style === 'ac6' ? 'block' : 'none';
+
+    // Show/hide the main block of color controls
+    const showColorOptions = style !== 'ac6' || ac6ForceColor;
+    els.colorOptionsWrapper.style.display = showColorOptions ? 'block' : 'none';
 }
 
 function populateSelect(element, options, clear = false) {
@@ -681,7 +689,8 @@ function setupCustomGradientControls() {
 }
 
 // Event Listeners
-els.style.addEventListener('change', updateStyleSpecificControls);
+els.style.addEventListener('change', updateUIVisibility);
+els.ac6ForceColor.addEventListener('change', updateUIVisibility);
 els.dlBtn.addEventListener('click', () => {
     const link = document.createElement('a');
     link.download = `subtitle-${Date.now()}.png`;
@@ -720,7 +729,7 @@ window.onload = () => {
     loadOptions();
     setupColorControls();
     setupCustomGradientControls();
-    updateStyleSpecificControls();
+    updateUIVisibility();
     setupAutoGenerate();
     generateSubtitle();
     console.log('Subtitle Generator Loaded');

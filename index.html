@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Open Graph -->
     <meta property="og:title" content="embi's Subtitle Generator">
     <meta property="og:description" content="Generate custom Project Wingman or Ace Combat Zero/7 styled subtitles with a lot of customization options.">
     <meta property="og:url" content="https://emberglazee.github.io/c1-subtitle-generator/">
@@ -18,11 +17,15 @@
 <body>
     <div class="container">
         <h1>Subtitle Generator</h1>
-        
+
         <div class="controls">
             <div class="control-group">
                 <label for="style">Style</label>
                 <select id="style"></select>
+            </div>
+
+            <div id="ac6-options" class="checkbox-group" style="display: none;">
+                <label><input type="checkbox" id="ac6ForceColor"> Force Speaker Color</label>
             </div>
 
             <div class="control-group">
@@ -35,69 +38,67 @@
                 <textarea id="quote" rows="3" placeholder="Enter text here...">You're a slave to history.</textarea>
             </div>
 
-            <div class="control-group">
-                <label>Color Type</label>
-                <div class="radio-group-container" id="colorType-radios">
-                    <label>
-                        <input type="radio" name="colorType" value="custom" checked>
-                        <span>Custom</span>
-                    </label>
-                    <label>
-                        <input type="radio" name="colorType" value="preset">
-                        <span>Preset</span>
-                    </label>
-                    <label>
-                        <input type="radio" name="colorType" value="gradient">
-                        <span>Gradient</span>
-                    </label>
-                </div>
-            </div>
-
-            <div id="customColor-group" class="control-group">
-                <label for="color">Speaker Color (Hex)</label>
-                <input type="color" id="colorPicker" value="#FF0000">
-                <input type="text" id="colorText" value="#FF0000">
-            </div>
-
-            <div id="preset-group" class="control-group" style="display: none;">
-                <label for="colorPreset">Color Presets</label>
-                <select id="colorPreset"></select>
-            </div>
-            
-            <div id="gradient-options-container" style="display: none;">
+            <div id="color-options-wrapper">
                 <div class="control-group">
-                    <label>Gradient Type</label>
-                    <div class="radio-group-container" id="gradientType-radios">
+                    <label>Color Type</label>
+                    <div class="radio-group-container" id="colorType-radios">
                         <label>
-                            <input type="radio" name="gradientType" value="preset" checked>
+                            <input type="radio" name="colorType" value="custom" checked>
+                            <span>Custom</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="colorType" value="preset">
                             <span>Preset</span>
                         </label>
                         <label>
-                            <input type="radio" name="gradientType" value="custom">
-                            <span>Custom</span>
+                            <input type="radio" name="colorType" value="gradient">
+                            <span>Gradient</span>
                         </label>
                     </div>
                 </div>
 
-                <div id="gradient-group" class="control-group">
-                    <label for="gradient">Gradient Presets</label>
-                    <select id="gradient"></select>
+                <div id="customColor-group" class="control-group">
+                    <label for="color">Speaker Color (Hex)</label>
+                    <input type="color" id="colorPicker" value="#FF0000">
+                    <input type="text" id="colorText" value="#FF0000">
                 </div>
-    
-                <div id="custom-gradient-group" class="control-group" style="display: none;">
-                    <label>Custom Gradient Colors</label>
-                    <div id="custom-gradient-colors"></div>
-                    <button type="button" id="addCustomGradientColorBtn" class="small-button">+ Add Color</button>
+
+                <div id="preset-group" class="control-group" style="display: none;">
+                    <label for="colorPreset">Color Presets</label>
+                    <select id="colorPreset"></select>
                 </div>
-            </div>
+                
+                <div id="gradient-options-container" style="display: none;">
+                    <div class="control-group">
+                        <label>Gradient Type</label>
+                        <div class="radio-group-container" id="gradientType-radios">
+                            <label>
+                                <input type="radio" name="gradientType" value="preset" checked>
+                                <span>Preset</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="gradientType" value="custom">
+                                <span>Custom</span>
+                            </label>
+                        </div>
+                    </div>
 
-            <div class="checkbox-group">
-                <label><input type="checkbox" id="stretchGradient"> Stretch Gradient</label>
-                <label><input type="checkbox" id="continuousGradient"> Continuous Gradient</label>
-            </div>
+                    <div id="gradient-group" class="control-group">
+                        <label for="gradient">Gradient Presets</label>
+                        <select id="gradient"></select>
+                    </div>
 
-            <div id="ac6-options" class="checkbox-group" style="display: none;">
-                <label><input type="checkbox" id="ac6ForceColor"> Force Speaker Color</label>
+                    <div id="custom-gradient-group" class="control-group" style="display: none;">
+                        <label>Custom Gradient Colors</label>
+                        <div id="custom-gradient-colors"></div>
+                        <button type="button" id="addCustomGradientColorBtn" class="small-button">+ Add Color</button>
+                    </div>
+                </div>
+
+                <div class="checkbox-group">
+                    <label><input type="checkbox" id="stretchGradient"> Stretch Gradient</label>
+                    <label><input type="checkbox" id="continuousGradient"> Continuous Gradient</label>
+                </div>
             </div>
 
             <div class="button-group">
