@@ -11,7 +11,7 @@ const GRADIENTS = {
     rainbow: ['#FF0000', '#FFA500', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3'],
     italian: ['#009246', '#FFFFFF', '#CE2B37'],
     french: ['#0055A4', '#FFFFFF', '#EF4135'],
-    ireland: ['#009A49', '#FFFFFF', '#FF7900']
+    irish: ['#009A49', '#FFFFFF', '#FF7900']
 };
 
 const GRADIENT_OPTIONS = [
@@ -20,7 +20,7 @@ const GRADIENT_OPTIONS = [
     { value: 'rainbow', name: '🏳️‍🌈 LGBTQ Flag' },
     { value: 'italian', name: '🇮🇹 Italian Flag' },
     { value: 'french', name: '🇫🇷 French Flag' },
-    { value: 'ireland', name: '🇮🇪 Irish Flag' }
+    { value: 'irish', name: '🇮🇪 Irish Flag' }
 ];
 
 const COLORS = {
@@ -89,8 +89,6 @@ const els = {
     gradient: document.getElementById('gradient'),
     stretch: document.getElementById('stretchGradient'),
     continuous: document.getElementById('continuousGradient'),
-    autoGenerate: document.getElementById('autoGenerate'),
-    btn: document.getElementById('generateBtn'),
     dlBtn: document.getElementById('downloadBtn'),
     copyBtn: document.getElementById('copyBtn'),
     canvas: document.getElementById('canvas'),
@@ -448,7 +446,7 @@ function setupColorControls() {
             handleAutoGenerate();
         });
     });
-    
+
     gradientTypeRadios.forEach(radio => {
         radio.addEventListener('change', () => {
             updateGradientControlVisibility();
@@ -493,16 +491,14 @@ function populateAllOptions() {
         });
         return group;
     };
-    
+
     presetEl.appendChild(createOptGroup('Basic', COLORS.basic));
     presetEl.appendChild(createOptGroup('Roles', COLORS.roles));
     presetEl.appendChild(createOptGroup('Characters', COLORS.characters));
 }
 
 function handleAutoGenerate() {
-    if (els.autoGenerate.checked) {
-        generateSubtitle();
-    }
+    generateSubtitle();
 }
 
 // Helper for stretched, per-character gradients
@@ -518,7 +514,7 @@ function getColorFromVirtualGradient(colors, percentage) {
     const colorStop = p * (colors.length - 1);
     const startIndex = Math.floor(colorStop);
     const endIndex = Math.min(startIndex + 1, colors.length - 1);
-    
+
     // Determine the interpolation amount between the two colors
     const interpAmount = colorStop - startIndex;
 
@@ -545,22 +541,13 @@ function getColorFromVirtualGradient(colors, percentage) {
     const r = iR.toString(16).padStart(2, '0');
     const g = iG.toString(16).padStart(2, '0');
     const b = iB.toString(16).padStart(2, '0');
-    
+
     return `#${r}${g}${b}`;
 }
 
 function setupAutoGenerate() {
-    const toggleGenerateButton = () => {
-        els.btn.style.display = els.autoGenerate.checked ? 'none' : 'block';
-    };
-
-    els.autoGenerate.addEventListener('change', () => {
-        toggleGenerateButton();
-        handleAutoGenerate();
-    });
-
     Object.values(els).forEach(element => {
-        if (element.id !== 'generateBtn' && element.id !== 'downloadBtn' && element.id !== 'autoGenerate') {
+        if (element && element.id && !['downloadBtn', 'copyBtn', 'canvas'].includes(element.id)) {
             const event = (element.type === 'text' || element.type === 'textarea') ? 'input' : 'change';
             element.addEventListener(event, handleAutoGenerate);
         }
@@ -569,8 +556,6 @@ function setupAutoGenerate() {
     document.querySelectorAll('input[name="colorType"]').forEach(radio => {
         radio.addEventListener('change', handleAutoGenerate);
     });
-
-    toggleGenerateButton();
 }
 
 function setupCustomGradientControls() {
@@ -618,22 +603,18 @@ function setupCustomGradientControls() {
         handleAutoGenerate();
     });
 
-    // Add some default colors
     addColorPicker('#FF0000');
     addColorPicker('#0000FF');
 }
 
 // Event Listeners
-els.btn.addEventListener('click', generateSubtitle);
 els.style.addEventListener('change', updateStyleSpecificControls);
-
 els.dlBtn.addEventListener('click', () => {
     const link = document.createElement('a');
     link.download = `subtitle-${Date.now()}.png`;
     link.href = els.canvas.toDataURL();
     link.click();
 });
-
 els.copyBtn.addEventListener('click', () => {
     els.canvas.toBlob(blob => {
         if (!blob) {
@@ -661,7 +642,6 @@ els.copyBtn.addEventListener('click', () => {
     }, 'image/png');
 });
 
-// Initial load
 window.onload = () => {
     populateAllOptions();
     setupColorControls();
