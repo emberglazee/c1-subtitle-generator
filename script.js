@@ -264,41 +264,45 @@ async function generateSubtitle() {
             const lineXStart = centerX - lineWidth / 2;
 
             if (continuous) {
-                // SMOOTH GRADIENT: Use a gradient or pattern for a single fillText call.
-                let gradientFill;
                 if (stretch) {
-                    // Continuous + Stretched: A single smooth gradient stretched to the line's width.
+                    // Stretch: A single gradient stretched to the text width.
+                    // Using direct centered drawing to avoid potential translate bugs.
                     const gradient = ctx.createLinearGradient(lineXStart, 0, lineXStart + lineWidth, 0);
                     gradientColors.forEach((c, i) => {
                         const stop = gradientColors.length > 1 ? i / (gradientColors.length - 1) : 0.5;
                         gradient.addColorStop(stop, c);
                     });
-                    gradientFill = gradient;
+                    ctx.fillStyle = gradient;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(line, centerX, y);
                 } else {
-                    // Continuous + Not Stretched: A smooth, repeating gradient pattern.
+                    // Not Stretched: A smoothly looping, repeating gradient pattern.
                     const patternWidth = 150; // A fixed width for the repeating pattern cycle.
                     const patternCanvas = document.createElement('canvas');
                     patternCanvas.width = patternWidth;
                     patternCanvas.height = 1;
                     const pctx = patternCanvas.getContext('2d');
                     const pat = pctx.createLinearGradient(0, 0, patternWidth, 0);
-                    gradientColors.forEach((c, i) => {
-                        const stop = gradientColors.length > 1 ? i / (gradientColors.length - 1) : 0.5;
+
+                    // Append first color to the end to make the gradient loop smoothly.
+                    const loopedColors = (gradientColors.length > 1) ? [...gradientColors, gradientColors[0]] : gradientColors;
+
+                    loopedColors.forEach((c, i) => {
+                        const stop = loopedColors.length > 1 ? i / (loopedColors.length - 1) : 0.5;
                         pat.addColorStop(stop, c);
                     });
                     pctx.fillStyle = pat;
                     pctx.fillRect(0, 0, patternWidth, 1);
-                    gradientFill = ctx.createPattern(patternCanvas, 'repeat-x');
+                    const gradientFill = ctx.createPattern(patternCanvas, 'repeat-x');
+
+                    ctx.fillStyle = gradientFill;
+                    // Must use translate for repeating patterns to align correctly.
+                    ctx.save();
+                    ctx.translate(lineXStart, 0);
+                    ctx.textAlign = 'left';
+                    ctx.fillText(line, 0, y);
+                    ctx.restore();
                 }
-
-                ctx.fillStyle = gradientFill;
-                // Translate the canvas for the repeating pattern to be aligned with the text.
-                ctx.save();
-                ctx.translate(lineXStart, 0);
-                ctx.textAlign = 'left';
-                ctx.fillText(line, 0, y);
-                ctx.restore();
-
             } else {
                 let currentX = lineXStart;
                 ctx.textAlign = 'left';
