@@ -499,7 +499,65 @@ function populateAllOptions() {
 
 function handleAutoGenerate() {
     generateSubtitle();
+    saveOptions();
 }
+
+// Persistence via localStorage
+function saveOptions() {
+    const customGradientColors = Array.from(document.querySelectorAll('#custom-gradient-colors .custom-gradient-color-item input[type="text"]'))
+                                      .map(input => input.value);
+
+    const options = {
+        style: els.style.value,
+        speaker: els.speaker.value,
+        quote: els.quote.value,
+        colorType: document.querySelector('input[name="colorType"]:checked').value,
+        color: els.colorText.value,
+        colorPreset: els.colorPreset.value,
+        gradientType: document.querySelector('input[name="gradientType"]:checked').value,
+        gradient: els.gradient.value,
+        customGradientColors: customGradientColors,
+        stretch: els.stretch.checked,
+        continuous: els.continuous.checked,
+        ac6ForceColor: els.ac6ForceColor.checked
+    };
+
+    localStorage.setItem('subtitleGeneratorOptions', JSON.stringify(options));
+}
+
+function loadOptions() {
+    const savedOptionsJSON = localStorage.getItem('subtitleGeneratorOptions');
+    if (!savedOptionsJSON) return;
+
+    const options = JSON.parse(savedOptionsJSON);
+
+    els.style.value = options.style ?? 'pw';
+    els.speaker.value = options.speaker ?? 'Crimson 1';
+    els.quote.value = options.quote ?? "You're a slave to history.";
+    els.colorText.value = options.color ?? '#FF0000';
+    els.colorPicker.value = options.color ?? '#FF0000';
+    els.colorPreset.value = options.colorPreset ?? '#FF5555';
+    els.gradient.value = options.gradient ?? 'none';
+    els.stretch.checked = options.stretch ?? false;
+    els.continuous.checked = options.continuous ?? false;
+    els.ac6ForceColor.checked = options.ac6ForceColor ?? false;
+
+    if (options.colorType) {
+        const radio = document.querySelector(`input[name="colorType"][value="${options.colorType}"]`);
+        if (radio) radio.checked = true;
+    }
+    if (options.gradientType) {
+        const radio = document.querySelector(`input[name="gradientType"][value="${options.gradientType}"]`);
+        if (radio) radio.checked = true;
+    }
+
+    if (options.customGradientColors && options.customGradientColors.length > 0) {
+        const container = document.getElementById('custom-gradient-colors');
+        container.innerHTML = '';
+        options.customGradientColors.forEach(color => addColorPicker(color));
+    }
+}
+
 
 // Helper for stretched, per-character gradients
 function getColorFromVirtualGradient(colors, percentage) {
@@ -556,55 +614,61 @@ function setupAutoGenerate() {
     document.querySelectorAll('input[name="colorType"]').forEach(radio => {
         radio.addEventListener('change', handleAutoGenerate);
     });
+
+    document.querySelectorAll('input[name="gradientType"]').forEach(radio => {
+        radio.addEventListener('change', handleAutoGenerate);
+    });
+}
+
+function addColorPicker(color = '#FFFFFF') {
+    const container = document.getElementById('custom-gradient-colors');
+    const colorItem = document.createElement('div');
+    colorItem.className = 'custom-gradient-color-item';
+
+    const colorPicker = document.createElement('input');
+    colorPicker.type = 'color';
+    colorPicker.value = color;
+
+    const colorText = document.createElement('input');
+    colorText.type = 'text';
+    colorText.value = color;
+    colorText.maxLength = 7;
+
+    colorPicker.addEventListener('input', () => { colorText.value = colorPicker.value; handleAutoGenerate(); });
+    colorText.addEventListener('input', () => { 
+        if (/^#[0-9a-f]{6}$/i.test(colorText.value)) {
+            colorPicker.value = colorText.value;
+            handleAutoGenerate();
+        }
+    });
+
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '×';
+    removeBtn.className = 'remove-color-btn';
+    removeBtn.type = 'button';
+    removeBtn.title = 'Remove color';
+    removeBtn.addEventListener('click', () => {
+        colorItem.remove();
+        handleAutoGenerate();
+    });
+
+    colorItem.appendChild(colorPicker);
+    colorItem.appendChild(colorText);
+    colorItem.appendChild(removeBtn);
+    container.appendChild(colorItem);
 }
 
 function setupCustomGradientControls() {
-    const container = document.getElementById('custom-gradient-colors');
-
-    function addColorPicker(color = '#FFFFFF') {
-        const colorItem = document.createElement('div');
-        colorItem.className = 'custom-gradient-color-item';
-
-        const colorPicker = document.createElement('input');
-        colorPicker.type = 'color';
-        colorPicker.value = color;
-
-        const colorText = document.createElement('input');
-        colorText.type = 'text';
-        colorText.value = color;
-        colorText.maxLength = 7;
-
-        colorPicker.addEventListener('input', () => { colorText.value = colorPicker.value; handleAutoGenerate(); });
-        colorText.addEventListener('input', () => { 
-            if (/^#[0-9a-f]{6}$/i.test(colorText.value)) {
-                colorPicker.value = colorText.value;
-                handleAutoGenerate();
-            }
-        });
-
-        const removeBtn = document.createElement('button');
-        removeBtn.textContent = '×';
-        removeBtn.className = 'remove-color-btn';
-        removeBtn.type = 'button';
-        removeBtn.title = 'Remove color';
-        removeBtn.addEventListener('click', () => {
-            colorItem.remove();
-            handleAutoGenerate();
-        });
-
-        colorItem.appendChild(colorPicker);
-        colorItem.appendChild(colorText);
-        colorItem.appendChild(removeBtn);
-        container.appendChild(colorItem);
-    }
-
     document.getElementById('addCustomGradientColorBtn').addEventListener('click', () => {
         addColorPicker();
         handleAutoGenerate();
     });
 
-    addColorPicker('#FF0000');
-    addColorPicker('#0000FF');
+    // Add default colors only if there are none (i.e., not loaded from localStorage)
+    if (document.querySelectorAll('#custom-gradient-colors .custom-gradient-color-item').length === 0) {
+        addColorPicker('#FF0000');
+        addColorPicker('#0000FF');
+    }
 }
 
 // Event Listeners
@@ -644,6 +708,7 @@ els.copyBtn.addEventListener('click', () => {
 
 window.onload = () => {
     populateAllOptions();
+    loadOptions();
     setupColorControls();
     setupCustomGradientControls();
     updateStyleSpecificControls();
