@@ -176,17 +176,22 @@ async function generateSubtitle() {
     const stretch = els.stretch.checked;
     const continuous = els.continuous.checked;
 
+    const ac6ForceColor = els.ac6ForceColor.checked;
+
+    // For AC6 style, override colors to white unless 'Force Speaker Color' is checked.
+    if (style === 'ac6' && !ac6ForceColor) {
+        if (isGradient) {
+            gradientColors = ['#FFFFFF'];
+        }
+        color = '#FFFFFF';
+    }
+
     // Determine the primary color for non-gradient elements (separators, arrows)
     let displayColor;
     if (isGradient && gradientColors && gradientColors.length > 0) {
         displayColor = gradientColors[0];
     } else {
         displayColor = color || els.colorText.value;
-    }
-
-    const ac6ForceColor = els.ac6ForceColor.checked;
-    if (style === 'ac6' && !ac6ForceColor) {
-        displayColor = '#FFFFFF';
     }
 
     // Font selection
