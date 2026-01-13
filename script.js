@@ -357,23 +357,51 @@ async function generateSubtitle() {
 
         y += lineHeight / 4;
 
-        let fill = displayColor;
+        let fill;
+        const hasGradient = isGradient && gradientColors && gradientColors.length > 0;
+
         if (style === 'ac6') {
             separatorWidth = 800; // Fixed length for AC6
             separatorX = centerX - separatorWidth / 2;
-
             const gradient = ctx.createLinearGradient(separatorX, 0, separatorX + separatorWidth, 0);
-            const transparentRgba = `rgba(${parseInt(displayColor.slice(1, 3), 16)}, ${parseInt(displayColor.slice(3, 5), 16)}, ${parseInt(displayColor.slice(5, 7), 16)}, 0)`;
 
-            gradient.addColorStop(0, transparentRgba);
-            gradient.addColorStop(0.25, displayColor);
-            gradient.addColorStop(0.75, displayColor);
-            gradient.addColorStop(1, transparentRgba);
+            if (hasGradient && gradientColors.length > 1) {
+                const firstColor = gradientColors[0];
+                const transparentFirst = `rgba(${parseInt(firstColor.slice(1, 3), 16)}, ${parseInt(firstColor.slice(3, 5), 16)}, ${parseInt(firstColor.slice(5, 7), 16)}, 0)`;
+                gradient.addColorStop(0, transparentFirst);
+                gradient.addColorStop(0.25, firstColor);
 
+                gradientColors.forEach((c, i) => {
+                    const stop = 0.25 + (i / (gradientColors.length - 1)) * 0.5;
+                    gradient.addColorStop(stop, c);
+                });
+
+                const lastColor = gradientColors[gradientColors.length - 1];
+                const transparentLast = `rgba(${parseInt(lastColor.slice(1, 3), 16)}, ${parseInt(lastColor.slice(3, 5), 16)}, ${parseInt(lastColor.slice(5, 7), 16)}, 0)`;
+                gradient.addColorStop(0.75, lastColor);
+                gradient.addColorStop(1, transparentLast);
+            } else {
+                const colorForGradient = hasGradient ? gradientColors[0] : displayColor;
+                const transparentRgba = `rgba(${parseInt(colorForGradient.slice(1, 3), 16)}, ${parseInt(colorForGradient.slice(3, 5), 16)}, ${parseInt(colorForGradient.slice(5, 7), 16)}, 0)`;
+                gradient.addColorStop(0, transparentRgba);
+                gradient.addColorStop(0.25, colorForGradient);
+                gradient.addColorStop(0.75, colorForGradient);
+                gradient.addColorStop(1, transparentRgba);
+            }
             fill = gradient;
         } else { // ACZ
             separatorWidth = maxW * 1.2;
             separatorX = centerX - separatorWidth / 2;
+            if (hasGradient) {
+                const gradient = ctx.createLinearGradient(separatorX, 0, separatorX + separatorWidth, 0);
+                gradientColors.forEach((c, i) => {
+                    const stop = gradientColors.length > 1 ? i / (gradientColors.length - 1) : 0.5;
+                    gradient.addColorStop(stop, c);
+                });
+                fill = gradient;
+            } else {
+                fill = displayColor;
+            }
         }
         ctx.fillStyle = fill;
         ctx.fillRect(separatorX, y, separatorWidth, 2);
