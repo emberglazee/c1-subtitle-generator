@@ -383,35 +383,149 @@ async function generateSubtitle() {
     }
 
     // Draw Quote
-    ctx.fillStyle = style === 'acz' ? displayColor : 'white';
     y += 2;
+    const isAczGradient = isGradient && gradientColors && gradientColors.length > 0 && style === 'acz';
 
-    quoteLines.forEach((line, i) => {
-        let lineX = centerX;
+    if (!isAczGradient) {
+        ctx.fillStyle = style === 'acz' ? displayColor : 'white';
+        quoteLines.forEach((line, i) => {
+            // Arrows for AC7/ACZ
+            if (isArrowStyle) {
+                const lineWidth = ctx.measureText(line).width;
+                const leftX = centerX - (lineWidth / 2) - 40;
+                const rightX = centerX + (lineWidth / 2) + 40;
 
-        // Arrows for AC7/ACZ
-        if (isArrowStyle) {
-            const lineWidth = ctx.measureText(line).width;
-            const leftX = centerX - (lineWidth / 2) - 40;
-            const rightX = centerX + (lineWidth / 2) + 40;
-
-            if (i === 0) {
-                ctx.save();
-                ctx.fillStyle = (isGradient && gradientColors) ? gradientColors[0] : displayColor;
-                ctx.fillText('<<', leftX, y);
-                ctx.restore();
+                if (i === 0) {
+                    ctx.save();
+                    ctx.fillStyle = (isGradient && gradientColors) ? gradientColors[0] : displayColor;
+                    ctx.fillText('<<', leftX, y);
+                    ctx.restore();
+                }
+                if (i === quoteLines.length - 1) {
+                    ctx.save();
+                    ctx.fillStyle = (isGradient && gradientColors) ? gradientColors[gradientColors.length - 1] : displayColor;
+                    ctx.fillText('>>', rightX, y);
+                    ctx.restore();
+                }
             }
-            if (i === quoteLines.length - 1) {
-                ctx.save();
-                ctx.fillStyle = (isGradient && gradientColors) ? gradientColors[gradientColors.length - 1] : displayColor;
-                ctx.fillText('>>', rightX, y);
-                ctx.restore();
-            }
-        }
+            ctx.fillText(line, centerX, y);
+            y += lineHeight;
+        });
+    } else {
+        let charIndex = 0;
+        quoteLines.forEach((line, i) => {
+            const isFirstLine = i === 0;
+            const isLastLine = i === quoteLines.length - 1;
 
-        ctx.fillText(line, lineX, y);
-        y += lineHeight;
-    });
+            if (continuous) {
+                const lineWidth = ctx.measureText(line).width;
+                let parts = [{ text: line, width: lineWidth, x: centerX }];
+                if (isArrowStyle) {
+                    if (isFirstLine) {
+                        const arrowWidth = ctx.measureText('<<').width;
+                        parts.unshift({ text: '<<', width: arrowWidth, x: centerX - lineWidth / 2 - 40 });
+                    }
+                    if (isLastLine) {
+                        const arrowWidth = ctx.measureText('>>').width;
+                        parts.push({ text: '>>', width: arrowWidth, x: centerX + lineWidth / 2 + 40 });
+                    }
+                }
+
+                const lineStartX = parts[0].x - parts[0].width / 2;
+                const lineEndX = parts[parts.length - 1].x + parts[parts.length - 1].width / 2;
+                const fullLineWidth = lineEndX - lineStartX;
+                
+                let gradient;
+                if (stretch) {
+                    gradient = ctx.createLinearGradient(lineStartX, 0, lineEndX, 0);
+                    gradientColors.forEach((c, i) => {
+                        const stop = gradientColors.length > 1 ? i / (gradientColors.length - 1) : 0.5;
+                        gradient.addColorStop(stop, c);
+                    });
+                } else {
+                    const patternWidth = 150;
+                    const patternCanvas = document.createElement('canvas');
+                    patternCanvas.width = patternWidth;
+                    patternCanvas.height = 1;
+                    const pctx = patternCanvas.getContext('2d');
+                    const pat = pctx.createLinearGradient(0, 0, patternWidth, 0);
+                    const loopedColors = (gradientColors.length > 1) ? [...gradientColors, gradientColors[0]] : gradientColors;
+                    loopedColors.forEach((c, i) => {
+                        const stop = loopedColors.length > 1 ? i / (loopedColors.length - 1) : 0.5;
+                        pat.addColorStop(stop, c);
+                    });
+                    pctx.fillStyle = pat;
+                    pctx.fillRect(0, 0, patternWidth, 1);
+                    gradient = ctx.createPattern(patternCanvas, 'repeat-x');
+                }
+                ctx.fillStyle = gradient;
+
+                ctx.save();
+                if (!stretch) {
+                    ctx.translate(lineStartX, 0);
+                    ctx.textAlign = 'left';
+                    parts.forEach(part => {
+                        const drawX = (part.x - part.width / 2) - lineStartX;
+                        ctx.fillText(part.text, drawX, y);
+                    });
+                } else {
+                    parts.forEach(part => {
+                        ctx.fillText(part.text, part.x, y);
+                    });
+                }
+                ctx.restore();
+            } else { // Per-character
+                const lineTokens = line.split('');
+                const allTokens = [...lineTokens];
+                if (isArrowStyle && isFirstLine) allTokens.unshift('<<');
+                if (isArrowStyle && isLastLine) allTokens.push('>>');
+                
+                const lineWidth = ctx.measureText(line).width;
+                const arrowWidth = ctx.measureText('<<').width;
+
+                const parts = [];
+                if (isArrowStyle && isFirstLine) parts.push({ text: '<<', x: centerX - lineWidth / 2 - 40 });
+                line.split('').forEach((char, charIdx) => {
+                    const preText = line.substring(0, charIdx);
+                    const preWidth = ctx.measureText(preText).width;
+                    const charWidth = ctx.measureText(char).width;
+                    parts.push({text: char, x: (centerX - lineWidth/2) + preWidth + charWidth/2 });
+                });
+                if (isArrowStyle && isLastLine) parts.push({ text: '>>', x: centerX + lineWidth / 2 + 40 });
+
+                let totalWidth = 0;
+                let lineStartX = 0;
+                if(parts.length > 0){
+                    const firstPart = parts[0];
+                    const lastPart = parts[parts.length-1];
+                    lineStartX = firstPart.x - ctx.measureText(firstPart.text).width/2;
+                    const lineEndX = lastPart.x + ctx.measureText(lastPart.text).width/2;
+                    totalWidth = lineEndX - lineStartX;
+                }
+
+                ctx.textAlign = 'center';
+                if (stretch) {
+                    parts.forEach(part => {
+                        const partWidth = ctx.measureText(part.text).width;
+                        const percentage = (part.x - partWidth/2 + partWidth / 2 - lineStartX) / totalWidth;
+                        let colorIndex = Math.floor(percentage * gradientColors.length);
+                        colorIndex = Math.min(colorIndex, gradientColors.length - 1);
+                        ctx.fillStyle = gradientColors[colorIndex];
+                        ctx.fillText(part.text, part.x, y);
+                    });
+                } else {
+                    parts.forEach((part, i) => {
+                        const colorIndex = (charIndex + i) % gradientColors.length;
+                        ctx.fillStyle = gradientColors[colorIndex];
+                        ctx.fillText(part.text, part.x, y);
+                    });
+                    charIndex += parts.length;
+                }
+            }
+
+            y += lineHeight;
+        });
+    }
 }
 
 function setupColorControls() {
